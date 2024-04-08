@@ -20,6 +20,11 @@ import Text.Blaze.Html5 (Html, a, docTypeHtml, h1, hr, li, stringValue, title, t
 import qualified Text.Blaze.Html5 as Html
 import Text.Blaze.Html5.Attributes (href)
 
+runServer :: Int -> IO ()
+runServer port = do
+  putStrLn $ "Find you files at http://localhost:" <> show port <> "/"
+  run port app
+
 app :: Application
 app request respond = do
   let path = intercalate [pathSeparator] . map Text.unpack $ pathInfo request
@@ -40,11 +45,6 @@ app request respond = do
               path
               Nothing
         else do respond $ responseLBS status404 [("Content-Type", "text/plain")] "File not found"
-
-runServer :: IO ()
-runServer = do
-  putStrLn "Find you files at http://localhost:8080/"
-  run 8080 app
 
 generateHtml :: FilePath -> [FilePath] -> Html
 generateHtml currentPath files = docTypeHtml $ do
