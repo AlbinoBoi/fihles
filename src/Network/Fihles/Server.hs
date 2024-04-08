@@ -5,41 +5,61 @@ module Network.Fihles.Server
   )
 where
 
-import Control.Monad (forM_)
+import qualified Data.ByteString.UTF8 as BS
+import Data.List (intercalate, sort)
 import qualified Data.Text as Text
-import Data.Text.Encoding (encodeUtf8)
 import Network.HTTP.Types
 import Network.HTTP.Types.Header (hContentDisposition)
 import Network.Wai
 import Network.Wai.Handler.Warp (run)
-import System.Directory.FileGrabber (getDirectoryEntries)
+import System.Directory (doesDirectoryExist, doesFileExist, getCurrentDirectory, listDirectory)
+import System.FilePath
 import Text.Blaze.Html.Renderer.Utf8 (renderHtml)
-import Text.Blaze.Html5 as H
+import Text.Blaze.Html5 (Html, a, docTypeHtml, h1, hr, li, stringValue, title, toHtml, ul, (!))
+import qualified Text.Blaze.Html5 as Html
+import Text.Blaze.Html5.Attributes (href)
+import Text.Printf (printf)
 
 app :: Application
-app req respond = do
+app request respond = do
   putStrLn "Starting Server"
-  let path = Text.intercalate "/" $ pathInfo req
-  entries <- getDirectoryEntries
-  if path == ""
-    then do respond $ responseLBS status200 [("Content-Type", "text/html")] $ renderHtml $ generateIndex entries
-    else do
-      respond $
-        responseFile
-          status200
-          [(hContentType, "text/plain"), (hContentDisposition, "attachment; filename=" <> encodeUtf8 path)]
-          (Text.unpack path)
-          Nothing
+  printf "Path info is %s\n" $ show $ pathInfo request
+  let path = intercalate [pathSeparator] . map Text.unpack $ pathInfo request
+  fullPath <- fmap (</> path) getCurrentDirectory
+  printf "Path is %s\n" path
+  printf "Full Path is %s\n" fullPath
+  isDir <- doesDirectoryExist fullPath
+  isFile <- doesFileExist fullPath
+  if isDir
+    then do
+      entries <- sort <$> listDirectory fullPath
+      respond . responseLBS status200 [("Content-Type", "text/html")] . renderHtml $ generateHtml path entries
+    else
+      if isFile
+        then do
+          respond $
+            responseFile
+              status200
+              [(hContentType, "text/plain"), (hContentDisposition, "attachment; filename=" <> BS.fromString (takeFileName path))]
+              path
+              Nothing
+        else do respond $ responseLBS status404 [("Content-Type", "text/plain")] "File not found"
 
 runServer :: IO ()
 runServer = do
-  putStrLn "http://localhost:8080/"
+  putStrLn "Find you files at http://localhost:8080/"
   run 8080 app
 
-generateIndex :: [FilePath] -> Html
-generateIndex files = docTypeHtml $ do
-  H.head $ do
-    H.title "Index for /"
-  body $ do
-    p "Available files"
-    ul $ forM_ files (li . toHtml)
+generateHtml :: FilePath -> [FilePath] -> Html
+generateHtml currentPath files = docTypeHtml $ do
+  Html.head $ do
+    title "Fihles"
+  Html.body $ do
+    let displayedPath = [pathSeparator] </> currentPath
+    h1 . toHtml $ "Directory listing for " <> displayedPath
+    hr
+    ul $ mapM_ (generateEntry displayedPath) files
+    hr
+
+generateEntry :: FilePath -> FilePath -> Html
+generateEntry directory file = li (a ! href (stringValue $ directory </> file) $ toHtml file)

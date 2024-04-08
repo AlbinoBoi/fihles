@@ -28,6 +28,8 @@ dependencies:
 - blaze-html
 - wai
 - warp
+- filepath
+- utf8-string
 
 ghc-options:
 - -Wall

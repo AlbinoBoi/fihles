@@ -26,7 +26,6 @@ source-repository head
 library
   exposed-modules:
       Network.Fihles.Server
-      System.Directory.FileGrabber
   other-modules:
       Paths_fihles
   autogen-modules:
@@ -39,8 +38,10 @@ library
     , blaze-html
     , bytestring
     , directory
+    , filepath
     , http-types
     , text
+    , utf8-string
     , wai
     , warp
   default-language: Haskell2010
@@ -60,8 +61,10 @@ executable fihles-exe
     , bytestring
     , directory
     , fihles
+    , filepath
     , http-types
     , text
+    , utf8-string
     , wai
     , warp
   default-language: Haskell2010
@@ -82,8 +85,10 @@ test-suite fihles-test
     , bytestring
     , directory
     , fihles
+    , filepath
     , http-types
     , text
+    , utf8-string
     , wai
     , warp
   default-language: Haskell2010
