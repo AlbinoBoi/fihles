@@ -6,7 +6,8 @@ module Network.Fihles.Server
 where
 
 import qualified Data.ByteString.UTF8 as BS
-import Data.List (intercalate, sort)
+import Data.Char (toLower)
+import Data.List (intercalate, sortBy)
 import qualified Data.Text as Text
 import Network.HTTP.Types
 import Network.HTTP.Types.Header (hContentDisposition)
@@ -18,21 +19,16 @@ import Text.Blaze.Html.Renderer.Utf8 (renderHtml)
 import Text.Blaze.Html5 (Html, a, docTypeHtml, h1, hr, li, stringValue, title, toHtml, ul, (!))
 import qualified Text.Blaze.Html5 as Html
 import Text.Blaze.Html5.Attributes (href)
-import Text.Printf (printf)
 
 app :: Application
 app request respond = do
-  putStrLn "Starting Server"
-  printf "Path info is %s\n" $ show $ pathInfo request
   let path = intercalate [pathSeparator] . map Text.unpack $ pathInfo request
   fullPath <- fmap (</> path) getCurrentDirectory
-  printf "Path is %s\n" path
-  printf "Full Path is %s\n" fullPath
   isDir <- doesDirectoryExist fullPath
   isFile <- doesFileExist fullPath
   if isDir
     then do
-      entries <- sort <$> listDirectory fullPath
+      entries <- sortBy (\x y -> compare (map toLower x) (map toLower y)) <$> listDirectory fullPath
       respond . responseLBS status200 [("Content-Type", "text/html")] . renderHtml $ generateHtml path entries
     else
       if isFile
