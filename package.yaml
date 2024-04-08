@@ -46,7 +46,7 @@ library:
   source-dirs: src
 
 executables:
-  fihles-exe:
+  fihles:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
