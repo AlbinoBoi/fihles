@@ -6,7 +6,7 @@ Requirements
 
 Installation
 ------------
-    git clone https://github.com/AlbinoBoi/fihles.git
+    git clone https://github.com/heiziff/fihles.git
     cd fihles
     stack build --copy-bins
 
